@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GeoGuard - Topological Disaster Synthesis Engine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .slider { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: #374151; border-radius: 5px; outline: none; }
+    .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #3B82F6; cursor: pointer; }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen font-sans">
+  <!-- Top Navigation -->
+  <header class="border-b border-gray-800 bg-gray-900/60 backdrop-blur px-6 py-4 flex justify-between items-center">
+    <div class="flex items-center space-x-3">
+      <div class="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white text-lg shadow-lg shadow-blue-500/30">G</div>
+      <div>
+        <h1 class="text-lg font-semibold tracking-wide text-white">GeoGuard AI</h1>
+        <p class="text-xs text-gray-400">Depth-Regulated Semantic Disaster Simulation System</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2">
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900/60 text-green-300 border border-green-800">IEEE Capstone Edition</span>
+      <span id="backendStatus" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-900/60 text-yellow-300 border border-yellow-800">Checking API...</span>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Left Controls Panel -->
+    <div class="lg:col-span-4 bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-xl space-y-5">
+      <div>
+        <h2 class="text-sm font-semibold uppercase text-gray-400 tracking-wider">1. Input Scene</h2>
+        <div class="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-700 border-dashed rounded-lg hover:border-blue-500 transition cursor-pointer" onclick="document.getElementById('fileInput').click()">
+          <div class="space-y-1 text-center">
+            <svg class="mx-auto h-10 w-10 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <div class="text-sm text-gray-400"><span class="text-blue-400 font-medium">Click to upload</span> local image</div>
+            <p class="text-xs text-gray-500">PNG, JPG up to 10MB (auto 512x512)</p>
+          </div>
+        </div>
+        <input id="fileInput" type="file" accept="image/*" class="hidden" onchange="previewInput(event)">
+      </div>
+
+      <!-- Disaster Configuration -->
+      <div class="space-y-4">
+        <h2 class="text-sm font-semibold uppercase text-gray-400 tracking-wider">2. Simulation Settings</h2>
+        
+        <div>
+          <label class="block text-xs font-medium text-gray-300">Disaster Category</label>
+          <select id="disasterType" class="mt-1 block w-full rounded-md bg-gray-800 border-gray-700 text-sm text-white p-2 border focus:border-blue-500" onchange="updatePrompts()">
+            <option value="flood">Flash Flood / Inundation</option>
+            <option value="collapse">Terrain / Road Collapse (Landslide)</option>
+            <option value="heavy_rain">Heavy Rainstorm (Dual-Branch)</option>
+            <option value="snow_blizzard">Blizzard / Deep Snow (Atmospheric)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-300">Segmentation Target Prompt</label>
+          <input id="targetPrompt" type="text" value="river, road, ground, street" class="mt-1 block w-full rounded-md bg-gray-800 border-gray-700 text-sm text-white p-2 border focus:border-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-300">Inpainting Synthesis Prompt</label>
+          <input id="disasterPrompt" type="text" value="submerged flooded street muddy turbulent floodwaters floating debris" class="mt-1 block w-full rounded-md bg-gray-800 border-gray-700 text-sm text-white p-2 border focus:border-blue-500">
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-medium text-gray-300">Disaster Severity Level</label>
+            <span id="severityLabel" class="text-xs font-semibold text-blue-400">Warning (0.75)</span>
+          </div>
+          <input id="severitySlider" type="range" min="0.1" max="1.0" step="0.05" value="0.75" class="slider mt-2" oninput="updateSeverity(this.value)">
+          <div class="flex justify-between text-[10px] text-gray-500 mt-1">
+            <span>Advisory (Low)</span>
+            <span>Warning (Critical)</span>
+          </div>
+        </div>
+      </div>
+
+      <button id="generateBtn" onclick="runSimulation()" class="w-full py-3 px-4 rounded-lg bg-blue-600 hover:bg-blue-500 font-semibold text-sm text-white shadow-lg shadow-blue-600/30 transition flex items-center justify-center space-x-2">
+        <span id="btnText">Synthesize Disaster Scene</span>
+      </button>
+    </div>
+
+    <!-- Right Visualization Display -->
+    <div class="lg:col-span-8 bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-xl flex flex-col">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-sm font-semibold uppercase text-gray-400 tracking-wider">3. Live Visualizer</h2>
+        <div class="flex space-x-2 text-xs">
+          <span class="px-2 py-1 rounded bg-gray-800 text-gray-300">ControlNet Locked</span>
+          <span class="px-2 py-1 rounded bg-gray-800 text-gray-300">DPT Guided</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+        <!-- Input Display -->
+        <div class="border border-gray-800 rounded-lg bg-gray-950 flex flex-col items-center justify-center p-2 relative overflow-hidden min-h-[360px]">
+          <span class="absolute top-2 left-2 bg-black/60 px-2 py-1 rounded text-[11px] text-gray-400">Source Scene</span>
+          <img id="inputPreview" class="max-h-[340px] rounded object-contain hidden" />
+          <div id="inputPlaceholder" class="text-gray-600 text-sm">Upload an image to preview</div>
+        </div>
+
+        <!-- Output Display -->
+        <div class="border border-gray-800 rounded-lg bg-gray-950 flex flex-col items-center justify-center p-2 relative overflow-hidden min-h-[360px]">
+          <span class="absolute top-2 left-2 bg-black/60 px-2 py-1 rounded text-[11px] text-blue-400 font-semibold">Simulated Outcome</span>
+          <img id="outputPreview" class="max-h-[340px] rounded object-contain hidden" />
+          <div id="outputPlaceholder" class="text-gray-600 text-sm">Synthesized output will render here</div>
+          <div id="loadingSpinner" class="hidden flex flex-col items-center space-y-2">
+            <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <span class="text-xs text-gray-400">Generating Elevation Mask & Latents...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
+    let selectedFile = null;
+
+    async function checkHealth() {
+      try {
+        const res = await fetch(`${API_URL}/api/health`);
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('backendStatus').innerText = `Engine: ${data.device.toUpperCase()}`;
+          document.getElementById('backendStatus').className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900/60 text-green-300 border border-green-800";
+        }
+      } catch (err) {
+        document.getElementById('backendStatus').innerText = "API Offline";
+        document.getElementById('backendStatus').className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-900/60 text-red-300 border border-red-800";
+      }
+    }
+    checkHealth();
+
+    function previewInput(event) {
+      selectedFile = event.target.files[0];
+      if (selectedFile) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = document.getElementById('inputPreview');
+          img.src = e.target.result;
+          img.classList.remove('hidden');
+          document.getElementById('inputPlaceholder').classList.add('hidden');
+        };
+        reader.readAsDataURL(selectedFile);
+      }
+    }
+
+    function updateSeverity(val) {
+      const tag = val < 0.5 ? "Advisory" : "Warning";
+      document.getElementById('severityLabel').innerText = `${tag} (${val})`;
+    }
+
+    function updatePrompts() {
+      const type = document.getElementById('disasterType').value;
+      const target = document.getElementById('targetPrompt');
+      const disaster = document.getElementById('disasterPrompt');
+
+      if (type === 'flood') {
+        target.value = "river, road, ground, street";
+        disaster.value = "submerged flooded street muddy turbulent floodwaters floating debris";
+      } else if (type === 'collapse') {
+        target.value = "road, bridge, ground";
+        disaster.value = "collapsed cracked road, earthquake landslide debris, structural destruction";
+      } else if (type === 'heavy_rain') {
+        target.value = "ground, road, river";
+        disaster.value = "torrential rain flooding, waterlogged street, dark gloomy storm reflections";
+      } else if (type === 'snow_blizzard') {
+        target.value = "road, ground, rooftops, trees";
+        disaster.value = "deep heavy snowdrifts, frozen blizzard, whiteout snowpack covering roads";
+      }
+    }
+
+    async function runSimulation() {
+      if (!selectedFile) {
+        alert("Please upload a source scene image first.");
+        return;
+      }
+
+      const btn = document.getElementById('generateBtn');
+      const btnText = document.getElementById('btnText');
+      const spinner = document.getElementById('loadingSpinner');
+      const outImg = document.getElementById('outputPreview');
+      const placeholder = document.getElementById('outputPlaceholder');
+
+      btn.disabled = true;
+      btnText.innerText = "Processing...";
+      spinner.classList.remove('hidden');
+      outImg.classList.add('hidden');
+      placeholder.classList.add('hidden');
+
+      const formData = new FormData();
+      formData.append("image_file", selectedFile);
+      formData.append("disaster_type", document.getElementById('disasterType').value);
+      formData.append("target_prompt", document.getElementById('targetPrompt').value);
+      formData.append("disaster_prompt", document.getElementById('disasterPrompt').value);
+      formData.append("severity", document.getElementById('severitySlider').value);
+
+      try {
+        const response = await fetch(`${API_URL}/api/generate`, {
+          method: "POST",
+          body: formData
+        });
+
+        if (!response.ok) throw new Error("Synthesis failed on backend");
+
+        const blob = await response.blob();
+        outImg.src = URL.createObjectURL(blob);
+        outImg.classList.remove('hidden');
+      } catch (err) {
+        alert(err.message);
+        placeholder.classList.remove('hidden');
+      } finally {
+        spinner.classList.add('hidden');
+        btn.disabled = false;
+        btnText.innerText = "Synthesize Disaster Scene";
+      }
+    }
+  </script>
+</body>
+</html>

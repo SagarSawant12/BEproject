@@ -1,0 +1,33 @@
+# Environments & Python Cache
+__pycache__/
+*.pyc
+*.pyo
+dml_env/
+venv/
+env/
+.env
+
+# Model Checkpoints & Large Data
+*.pth
+*.pt
+*.safetensors
+*.bin
+*.onnx
+models/
+.cache/
+
+# Exports & Generated Files
+temp_export/
+*.pdf
+output/
+
+# Editor & OS Metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+__pycache__/
+dml_env/
+*.part
+.env
